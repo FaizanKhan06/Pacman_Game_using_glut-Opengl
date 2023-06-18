@@ -16,7 +16,7 @@ int animationSpeed = 5; // Animation speed in degrees per frame
 int pacman_anim_state = 0; //0=close 1 = open
 int pacman_angle = 0;
 
-//Map square size
+//Map squares size
 const int squareSize = 16;
 
 //Food related
