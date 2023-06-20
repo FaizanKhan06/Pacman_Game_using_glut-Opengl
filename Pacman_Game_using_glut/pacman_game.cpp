@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <cstdio>
+#include <cstdlib>
 using namespace std;
 
 //Main window
@@ -15,6 +16,7 @@ float endAngle = 300.0f; // End angle of the arc
 int animationSpeed = 5; // Animation speed in degrees per frame
 int pacman_anim_state = 0; //0=close 1 = open
 int pacman_angle = 0;
+bool displayPacman = true;
 
 //Map squares size
 const int squareSize = 16;
@@ -27,9 +29,12 @@ const int food_offset = 16;
 int direction = 0; // R L U D
 
 //Pacman position and speed
-float pac_man_pos_x = 32.0f;
-float pac_man_pos_y = 32.0f;
+float pacman_origin[2] = { 232.0f, 224.0f };
+float pac_man_pos_x = 232.0f;
+float pac_man_pos_y = 224.0f;
 float speed = 1.0f;
+int pacman_lives = 3;
+bool pacmanAwake = true;
 
 //Pacman Rays
 int offsetRay1 = 15;
@@ -55,7 +60,7 @@ std::vector<Food> foods;
 int awake = 0;
 
 //Draws Rays if true
-bool drawGizmos = true;
+bool drawGizmos = false;
 
 //False keypress Manager
 int coyoteTime = 30;
@@ -85,13 +90,14 @@ struct Ghost {
     int x;
     int y;
     float color[3];
-    bool canMove[4];
+    int direction = 0;
+    bool canMove[4] = { false, false, false, false };
+    bool prevCanMove[4] = { false, false, false, false };
     Ray Rays[4][5] = { {{0,0,0,15}, {0,0,0,-15}, {0,0,0,7}, {0,0,0,-7} , {0,0,0,0}},
                         {{0,0,0,15}, {0,0,0,-15}, {0,0,0,7}, {0,0,0,-7} , {0,0,0,0}},
                         {{0,0,15,0}, {0,0,-15,0}, {0,0,7,0}, {0,0,-7,0} , {0,0,0,0}},
                         {{0,0,15,0}, {0,0,-15,0}, {0,0,7,0}, {0,0,-7,0} , {0,0,0,0}}
     };
-    int direction = 0;
 };
 
 //Ghost related
@@ -99,9 +105,10 @@ int ghostSize = 22;
 int ghostSpeed = 1;
 
 //Initializing Ghosts
-Ghost orangeGhost = { 22, 166,{ 1.0f, 0.7215f, 0.32156f }, { false, false, false, false } };
-Ghost cyanGhost = { 22, 470,{ 0.0f, 1.0f, 1.0f }, { false, false, false, false } };
-Ghost pinkGhost = { 22, 406,{ 1.0f, 0.721f, 1.0f }, { false, false, false, false } };
+Ghost orangeGhost = { 22, 22,{ 1.0f, 0.7215f, 0.32156f },0};
+Ghost cyanGhost = { 22, 470,{ 0.0f, 1.0f, 1.0f },0};
+Ghost pinkGhost = { 400, 470,{ 1.0f, 0.721f, 1.0f },1};
+Ghost redGhost = { 400, 22,{ 1.0f, 0.0f, 0.0f },1 };
 
 //Map
 const int map[32][29] = { //0 = playable & eatable area ; 1 = Walls ; 2 = non playable & eatable area
@@ -118,7 +125,7 @@ const int map[32][29] = { //0 = playable & eatable area ; 1 = Walls ; 2 = non pl
     {1,1,1,1,1,1,0,0,1,1,1,1,2,2,1,2,2,1,1,1,1,0,0,1,1,1,1,1,1},
     {2,2,2,2,2,1,0,0,1,2,2,2,2,2,2,2,2,2,2,2,1,0,0,1,2,2,2,2,2},
     {2,2,2,2,2,1,0,0,1,2,2,2,2,2,2,2,2,2,2,2,1,0,0,1,2,2,2,2,2},
-    {1,1,1,1,1,1,0,0,1,2,2,1,1,2,2,2,1,1,2,2,1,0,0,1,1,1,1,1,1},
+    {1,1,1,1,1,1,0,0,1,2,2,1,1,1,2,1,1,1,2,2,1,0,0,1,1,1,1,1,1},
     {1,0,0,0,0,0,0,0,2,2,2,1,2,2,2,2,2,1,2,2,2,0,0,0,0,0,0,0,1},
     {1,0,0,0,0,0,0,0,2,2,2,1,2,2,2,2,2,1,2,2,2,0,0,0,0,0,0,0,1},
     {1,1,1,1,1,1,0,0,1,2,2,1,1,1,1,1,1,1,2,2,1,0,0,1,1,1,1,1,1},
@@ -169,7 +176,7 @@ void drawPacman() {
     float centerX = pac_man_pos_x; // X-coordinate of the center
     float centerY = pac_man_pos_y; // Y-coordinate of the center
     float radius = 10.0f;
-    int numSegments = 100; // Number of line segments to approximate the arc
+    int numSegments = 8; // Number of line segments to approximate the arc
 
     // Translate the object to the rotation point
     glTranslatef(centerX, centerY, 0.0f);
@@ -327,10 +334,48 @@ Ghost drawRays(Ghost ghost, int rayLength, int rayno) {
     }
     return ghost;
 }
+
+//Function to copy an array from one var to another
+Ghost copyArray(Ghost ghost) {
+    for (int i = 0; i < 4; i++) {
+        ghost.prevCanMove[i] = ghost.canMove[i];
+    }
+    return ghost;
+}
+
+//Function that gives an index value from a bool array that s true
+int getRandomIndexWithTrueValue(const bool* arr) {
+    int randomIndex;
+    do {
+        randomIndex = std::rand() % 4;
+    } while (!arr[randomIndex]);
+    return randomIndex;
+}
+
+//Function to check if two bool arrays are equal
+bool areArraysEqual(bool arr1[], bool arr2[]) {
+    for (int i = 0; i < 4; i++) {
+        if (arr1[i] != arr2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+//Ghost Cahnge Direction
+Ghost ghost_change_direction(Ghost ghost) {
+    if (!areArraysEqual(ghost.canMove, ghost.prevCanMove)) {
+
+        ghost.direction = getRandomIndexWithTrueValue(ghost.canMove);
+    }
+    ghost = copyArray(ghost);
+    return ghost;
+}
+
 //Main Ghost function
 Ghost drawGhost(Ghost ghost) {
     ghostDisplay(ghost);
     ghost = drawRays(ghost, rayLength, 0);
+    ghost = ghost_change_direction(ghost);
     ghost = ghostMoveFunction(ghost);
     return ghost;
 }
@@ -363,6 +408,13 @@ void arrowFunc(int key, int x, int y) {
     case GLUT_KEY_DOWN:
         directionToMove = 3;
         break;
+    }
+}
+
+void keyboard(unsigned char key, int x, int y) {
+    if (key == 'q' || key == 'Q') {
+        // Exit the program
+        exit(0);
     }
 }
 
@@ -407,9 +459,7 @@ bool detectCollisionForMultipleLines(Ray* rays) {
 }
 
 //Collision detection between pacman and ghost
-bool detectCollisionForMultipleLines_Pacman_Ghost(Ray* rays) {
-    for (int i = 0; i < 5; i++) {
-        Ray ray = rays[i];
+bool detectCollisionForMultipleLines_Pacman_Ghost(Ray ray) {
         //orange Ghost
         if (ray.rayEndpointX >= orangeGhost.x && ray.rayEndpointX <= (orangeGhost.x + ghostSize) && ray.rayEndpointY >= orangeGhost.y && ray.rayEndpointY <= (orangeGhost.y + ghostSize)) {
             return true;
@@ -422,7 +472,11 @@ bool detectCollisionForMultipleLines_Pacman_Ghost(Ray* rays) {
         if (ray.rayEndpointX >= cyanGhost.x && ray.rayEndpointX <= (cyanGhost.x + ghostSize) && ray.rayEndpointY >= cyanGhost.y && ray.rayEndpointY <= (cyanGhost.y + ghostSize)) {
             return true;
         }
-    }
+        //red Ghost
+        if (ray.rayEndpointX >= redGhost.x && ray.rayEndpointX <= (redGhost.x + ghostSize) && ray.rayEndpointY >= redGhost.y && ray.rayEndpointY <= (redGhost.y + ghostSize)) {
+            return true;
+        }
+
     return false;
 }
 
@@ -480,7 +534,40 @@ Ray drawLineFunc(Ray rayLine, int rayNo, int x_offset, int y_offset, int rayLeng
 }
 
 void pacman_dead_state() {
-    printf("Dead\n");
+    pacman_lives--;
+    if(pacman_lives >= 0)
+        printf("Lives Left = %d\n", pacman_lives);
+    if (pacman_lives == 0 && pacmanAwake) {
+        printf("Pacman Dead\n");
+        pacmanAwake = false;
+        displayPacman = false;
+    }
+    pac_man_pos_x = pacman_origin[0];
+    pac_man_pos_y = pacman_origin[1];
+    directionToMove = 0;
+    direction = 0;
+}
+
+void pacman_win_state() {
+    int count = 0;
+    for (const auto& food : foods) {
+        count++;
+    }
+    if (count <= 0 && pacmanAwake) {
+        printf("\n*********************Win*************************");
+        pacmanAwake = false;
+        orangeGhost.x = 700;
+        orangeGhost.y = 700;
+
+        cyanGhost.x = 800;
+        cyanGhost.y = 800;
+        
+        pinkGhost.x = 900;
+        pinkGhost.y = 900;
+        
+        redGhost.x = 900;
+        redGhost.y = 900;
+    }
 }
 
 //for player
@@ -500,7 +587,7 @@ void drawRays() {
     else
         canMoveDirection[0] = true;
 
-    if (detectCollisionForMultipleLines_Pacman_Ghost(rightRays))
+    if (detectCollisionForMultipleLines_Pacman_Ghost(rightRay5))
         pacman_dead_state();
 
     eaten = detectCollisionForMultipleLines_Food(rightRay5);
@@ -520,7 +607,7 @@ void drawRays() {
     else
         canMoveDirection[1] = true;
 
-    if (detectCollisionForMultipleLines_Pacman_Ghost(leftRays))
+    if (detectCollisionForMultipleLines_Pacman_Ghost(leftRay5))
         pacman_dead_state();
 
     eaten = detectCollisionForMultipleLines_Food(leftRay5);
@@ -540,7 +627,7 @@ void drawRays() {
     else
         canMoveDirection[2] = true;
 
-    if (detectCollisionForMultipleLines_Pacman_Ghost(topRays))
+    if (detectCollisionForMultipleLines_Pacman_Ghost(topRay5))
         pacman_dead_state();
 
     eaten = detectCollisionForMultipleLines_Food(topRay5);
@@ -560,7 +647,7 @@ void drawRays() {
     else
         canMoveDirection[3] = true;
 
-    if (detectCollisionForMultipleLines_Pacman_Ghost(bottomRays))
+    if (detectCollisionForMultipleLines_Pacman_Ghost(bottomRay5))
         pacman_dead_state();
 
     eaten = detectCollisionForMultipleLines_Food(bottomRay5);
@@ -576,20 +663,28 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     drawMap02();
-    drawPacman();
+    if (displayPacman) {
+        drawPacman();
+        coyoteTimeFunc();
+
+        updatePacmanPos();
+        drawRays();
+    }
     drawFood();
 
     orangeGhost = drawGhost(orangeGhost);
     cyanGhost = drawGhost(cyanGhost);
     pinkGhost = drawGhost(pinkGhost);
+    redGhost = drawGhost(redGhost);
 
-    coyoteTimeFunc();
+    pacman_win_state();
 
-    updatePacmanPos();
 
-    drawRays();
 
     glFlush();
+
+    if(awake==0)
+        printf("Lives Left = %d\n", pacman_lives);
 
     awake = 1;
 }
@@ -613,10 +708,12 @@ int main(int argc, char** argv) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(windowWidth, windowHeight);
+    glutInitWindowPosition(400, 150);
     glutCreateWindow("Pac-Man Game");
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     gluOrtho2D(-1.0, 1.0, -1.0, 1.0);
     glutSpecialFunc(arrowFunc);
+    glutKeyboardFunc(keyboard);
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutTimerFunc(0, update, 0);
