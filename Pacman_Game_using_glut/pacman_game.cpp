@@ -8,6 +8,9 @@
 
 using namespace std;
 
+//To restart add pacman_angle,win,lose,scoreCounter,direction,firstTimeDirectionPressed,pacman_x,pacman_y,pacman_lives,pacmanAwake,walls,foods,awake,directionToMove
+//orangeGhost,cyanGhost,redGhost,pinkGhost
+
 //Main window
 const int windowWidth = 464; //29
 const int windowHeight = 552; //32
@@ -85,7 +88,7 @@ struct Ray {
 };
 
 //player Rays
-int rayLength = 16, rayLength_Food = 6;
+int rayLength = 16, rayLength_Food = 6; 
 Ray rightRay1, rightRay2, rightRay3, rightRay4, rightRay5;
 Ray leftRay1, leftRay2, leftRay3, leftRay4, leftRay5;
 Ray topRay1, topRay2, topRay3, topRay4, topRay5;
@@ -154,6 +157,29 @@ const int map[32][29] = { //0 = playable & eatable area ; 1 = Walls ; 2 = non pl
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
     {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
+
+void restartGame() {
+    pacman_angle = 0;
+    win = false;
+    lose = false;
+    scoreCounter = 0;
+    direction = 5;
+    firstTimeDirectionPressed = false;
+    pac_man_pos_x = pacman_origin[0];
+    pac_man_pos_y = pacman_origin[1];
+    pacman_lives = 3;
+    pacmanAwake = true;
+    walls.clear();
+    foods.clear();
+    awake = 0;
+    directionToMove = 5;
+    displayPacman = true;
+
+    orangeGhost.x = 22; orangeGhost.y = 22; orangeGhost.direction = 0;
+    cyanGhost.x = 22; cyanGhost.y = 470; cyanGhost.direction = 0;
+    redGhost.x = 400; redGhost.y = 22; redGhost.direction = 1;
+    pinkGhost.x = 400; pinkGhost.y = 470; pinkGhost.direction = 1;
+}
 
 //Drawing Map
 void drawMap02() {
@@ -495,6 +521,9 @@ void keyboard(unsigned char key, int x, int y) {
         // Exit the program
         exit(0);
     }
+    if (key == 'r' || key == 'R') {
+        restartGame();
+    }
 }
 
 //False Time.
@@ -743,7 +772,7 @@ void drawRays() {
     }
 }
 
-void displayText(float x, float y, std::string text) {
+void displayText(float x, float y, std::string text, void* font) {
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -752,7 +781,7 @@ void displayText(float x, float y, std::string text) {
     glRasterPos2f(x, y);
 
     for (char c : text) {
-        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, c); // You can choose different fonts and sizes
+        glutBitmapCharacter(font, c); // You can choose different fonts and sizes
     }
 
     glPopMatrix();
@@ -783,26 +812,28 @@ void display() {
 
     glColor3f(1.0, 1.0, 1.0);
     //Score
-    displayText(315.0, 520.0, "Score = " + std::to_string(scoreCounter));
+    displayText(315.0, 520.0, "Score = " + std::to_string(scoreCounter), GLUT_BITMAP_TIMES_ROMAN_24);
     //Lives
-    displayText(20.0, 520.0, "Lives = " + std::to_string(pacman_lives));
+    displayText(20.0, 520.0, "Lives = " + std::to_string(pacman_lives), GLUT_BITMAP_TIMES_ROMAN_24);
     //Lose text
     if (win) {
         glColor3f(255.0f, 242.0f, 0.0f);
-        displayText(180.0f, 213.0f, "YOU WIN");
+        displayText(180.0f, 213.0f, "YOU WIN", GLUT_BITMAP_TIMES_ROMAN_24);
     }
     if (lose) {
         glColor3f(1.0f, 0.0f, 0.0f);
-        displayText(175.0f, 213.0f, "YOU LOSE");
+        displayText(175.0f, 213.0f, "YOU LOSE", GLUT_BITMAP_TIMES_ROMAN_24);
     }
+    glColor3f(255.0f, 242.0f, 0.0f);
+    displayText(145.0f, 536.0f, "'R to Restart'", GLUT_BITMAP_HELVETICA_18);
     glColor3f(1.0f, 0.0f, 0.0f);
-    displayText(145.0f, 520.0f, "'X to Quit'");
-    if (direction != 5 && !firstTimeDirectionPressed) {
+    displayText(145.0f, 516.0f, "'X to Quit'", GLUT_BITMAP_HELVETICA_18);
+    if (direction != 5 && !firstTimeDirectionPressed, GLUT_BITMAP_TIMES_ROMAN_24) {
         firstTimeDirectionPressed = true;
     }
     if (!firstTimeDirectionPressed && !lose){
         glColor3f(255.0f, 242.0f, 0.0f);
-        displayText(198.0f, 263.0f, "Ready!");
+        displayText(198.0f, 263.0f, "Ready!", GLUT_BITMAP_TIMES_ROMAN_24);
     }
 
     glFlush();
