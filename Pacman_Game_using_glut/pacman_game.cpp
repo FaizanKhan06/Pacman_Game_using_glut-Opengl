@@ -267,12 +267,82 @@ bool detectCollisionForMultipleLines(Ray* rays);
 //Should implement ghost change direction
 void ghostDisplay(Ghost ghost) {
     glColor3f(ghost.color[0], ghost.color[1], ghost.color[2]);
-    glBegin(GL_QUADS);
-    glVertex2f(ghost.x, ghost.y);
-    glVertex2f(ghost.x + ghostSize, ghost.y);
-    glVertex2f(ghost.x + ghostSize, ghost.y + ghostSize);
-    glVertex2f(ghost.x, ghost.y + ghostSize);
+    
+    //head semicircle
+    float ghostStartAngle = 0.0f;
+    float ghostEndAngle = 180.0f;
+    int numSegments = 8;
+    int head_radius = 10;
+    int ghost_head_offset[2] = { 11,10 };
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex2f(ghost.x+ghost_head_offset[0], ghost.y + ghost_head_offset[1]); // Center of the filled arc
+    for (int i = 0; i <= numSegments; i++) {
+        float angle = ghostStartAngle + (ghostEndAngle - ghostStartAngle) * float(i) / float(numSegments);
+        float x = ghost.x + ghost_head_offset[0] + head_radius * cos(angle * 3.14159 / 180.0);
+        float y = ghost.y + +ghost_head_offset[1] + head_radius * sin(angle * 3.14159 / 180.0);
+        glVertex2f(x, y);
+    }
     glEnd();
+
+    //body Square
+    int ghostBodySize[2] = {10,22};
+    int ghost_body_offset[2] = { 0, 0 };
+    glBegin(GL_QUADS);
+    glVertex2f(ghost.x + ghost_body_offset[0], ghost.y + ghost_body_offset[1]);
+    glVertex2f(ghost.x + ghost_body_offset[0] + ghostBodySize[1], ghost.y + ghost_body_offset[1]);
+    glVertex2f(ghost.x + ghost_body_offset[0] + ghostBodySize[1], ghost.y + ghostBodySize[0] + ghost_body_offset[1]);
+    glVertex2f(ghost.x + ghost_body_offset[0], ghost.y + ghostBodySize[0] + ghost_body_offset[1]);
+    glEnd();
+
+    //bottom circles
+    int bottom_circles_position[3][2] = { {ghost.x+5,ghost.y},{ghost.x + 12,ghost.y},{ghost.x + 17,ghost.y} };
+    float ghostStartAngle_bottom = 180.0f;
+    float ghostEndAngle_bottom = 360.0f;
+    int numSegments_bottom = 5;
+    int bottom_circle_radius = 3;
+    for (int j = 0; j < 3; j++) {
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(bottom_circles_position[j][0], bottom_circles_position[j][1]); // Center of the filled arc
+        for (int i = 0; i <= numSegments_bottom; i++) {
+            float angle = ghostStartAngle_bottom + (ghostEndAngle_bottom - ghostStartAngle_bottom) * float(i) / float(numSegments_bottom);
+            float x = bottom_circles_position[j][0] + bottom_circle_radius * cos(angle * 3.14159 / 180.0);
+            float y = bottom_circles_position[j][1] + bottom_circle_radius * sin(angle * 3.14159 / 180.0);
+            glVertex2f(x, y);
+        }
+        glEnd();
+    }
+
+    //Eyes
+    glColor3f(1.0f, 1.0f, 1.0f);
+    int ghost_eye_pos[2][2] = { {ghost.x+6,ghost.y+10},{ghost.x+16,ghost.y+10} };
+    int ghost_eye_radius = 5;
+    for (int j = 0; j < 3; j++) {
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(ghost_eye_pos[j][0], ghost_eye_pos[j][1]); // Center of the filled arc
+        for (int i = 0; i <= 20; i++) {
+            float angle = 0.0f + (360.0f - 0.0f) * float(i) / float(20);
+            float x = ghost_eye_pos[j][0] + ghost_eye_radius * cos(angle * 3.14159 / 180.0);
+            float y = ghost_eye_pos[j][1] + ghost_eye_radius * sin(angle * 3.14159 / 180.0);
+            glVertex2f(x, y);
+        }
+        glEnd();
+    }
+
+    //Eyeball
+    glColor3f(0.0f, 0.0f, 0.0f);
+    int ghost_eyeball_pos[2][2] = { {ghost.x + 6,ghost.y + 10},{ghost.x + 16,ghost.y + 10} };
+    int ghost_eyeball_radius = 2;
+    for (int j = 0; j < 3; j++) {
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex2f(ghost_eyeball_pos[j][0], ghost_eyeball_pos[j][1]); // Center of the filled arc
+        for (int i = 0; i <= 20; i++) {
+            float angle = 0.0f + (360.0f - 0.0f) * float(i) / float(20);
+            float x = ghost_eyeball_pos[j][0] + ghost_eyeball_radius * cos(angle * 3.14159 / 180.0);
+            float y = ghost_eyeball_pos[j][1] + ghost_eyeball_radius * sin(angle * 3.14159 / 180.0);
+            glVertex2f(x, y);
+        }
+        glEnd();
+    }
 }
 //Ray Endpoint updation
 Ray updateRayEndpointPos_Ghost(Ghost ghost, Ray rayLine, int rayLength_x, int rayLength_y) {
