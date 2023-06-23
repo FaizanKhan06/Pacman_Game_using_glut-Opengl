@@ -16,4 +16,4 @@ This repository contains a Pacman game implemented using GLUT and OpenGL. The ga
 <h2>Preview:</h2>
 
 
-![Untitled video - Made with Clipchamp (2)](https://github.com/FaizanKhan06/Pacman_Game_using_glut-Opengl/assets/62425415/ae06216f-966a-4cec-868b-d265187763c6)
+![Untitled video - Made with Clipchamp](https://github.com/FaizanKhan06/Pacman_Game_using_glut-Opengl/assets/62425415/052389a0-7ef5-4f47-bb1a-294a5e6e74d9)
