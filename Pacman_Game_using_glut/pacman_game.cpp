@@ -35,6 +35,7 @@ const int food_offset = 16;
 
 //Pacman move direction
 int direction = 5; // R L U D
+bool firstTimeDirectionPressed = false;
 
 //Pacman position and speed
 float pacman_origin[2] = { 232.0f, 224.0f };
@@ -490,7 +491,7 @@ void arrowFunc(int key, int x, int y) {
 }
 
 void keyboard(unsigned char key, int x, int y) {
-    if (key == 'q' || key == 'Q') {
+    if (key == 'x' || key == 'X') {
         // Exit the program
         exit(0);
     }
@@ -626,6 +627,7 @@ void pacman_dead_state() {
     directionToMove = 5;
     direction = 5;
     pacman_angle = 0;
+    firstTimeDirectionPressed = false;
 }
 
 void pacman_win_state() {
@@ -792,6 +794,15 @@ void display() {
     if (lose) {
         glColor3f(1.0f, 0.0f, 0.0f);
         displayText(175.0f, 213.0f, "YOU LOSE");
+    }
+    glColor3f(1.0f, 0.0f, 0.0f);
+    displayText(145.0f, 520.0f, "'X to Quit'");
+    if (direction != 5 && !firstTimeDirectionPressed) {
+        firstTimeDirectionPressed = true;
+    }
+    if (!firstTimeDirectionPressed && !lose){
+        glColor3f(255.0f, 242.0f, 0.0f);
+        displayText(198.0f, 263.0f, "Ready!");
     }
 
     glFlush();
