@@ -119,8 +119,8 @@ int ghostSpeed = 1;
 //Initializing Ghosts
 Ghost orangeGhost = { 22, 22,{ 1.0f, 0.7215f, 0.32156f },0};
 Ghost cyanGhost = { 22, 470,{ 0.0f, 1.0f, 1.0f },0};
-Ghost pinkGhost = { 400, 470,{ 1.0f, 0.721f, 1.0f },1};
-Ghost redGhost = { 400, 22,{ 1.0f, 0.0f, 0.0f },1 };
+Ghost pinkGhost = { 420, 470,{ 1.0f, 0.721f, 1.0f },1};
+Ghost redGhost = { 420, 22,{ 1.0f, 0.0f, 0.0f },1 };
 
 //Map
 const int map[32][29] = { //0 = playable & eatable area ; 1 = Walls ; 2 = non playable & eatable area
@@ -177,8 +177,8 @@ void restartGame() {
 
     orangeGhost.x = 22; orangeGhost.y = 22; orangeGhost.direction = 0;
     cyanGhost.x = 22; cyanGhost.y = 470; cyanGhost.direction = 0;
-    redGhost.x = 400; redGhost.y = 22; redGhost.direction = 1;
-    pinkGhost.x = 400; pinkGhost.y = 470; pinkGhost.direction = 1;
+    redGhost.x = 420; redGhost.y = 22; redGhost.direction = 1;
+    pinkGhost.x = 420; pinkGhost.y = 470; pinkGhost.direction = 1;
 }
 
 //Drawing Map
@@ -388,14 +388,17 @@ Ray updateRayEndpointPos_Ghost(Ghost ghost, Ray rayLine, int rayLength_x, int ra
 }
 //ghost movement
 Ghost ghostMoveFunction(Ghost ghost) {
-    if (ghost.direction == 0 && ghost.canMove[0] == true) {
-        ghost.x += ghostSpeed;
-    }if (ghost.direction == 1 && ghost.canMove[1] == true) {
-        ghost.x -= ghostSpeed;
-    }if (ghost.direction == 2 && ghost.canMove[2] == true) {
-        ghost.y += ghostSpeed;
-    }if (ghost.direction == 3 && ghost.canMove[3] == true) {
-        ghost.y -= ghostSpeed;
+    if (firstTimeDirectionPressed || lose) {
+
+        if (ghost.direction == 0 && ghost.canMove[0] == true) {
+            ghost.x += ghostSpeed;
+        }if (ghost.direction == 1 && ghost.canMove[1] == true) {
+            ghost.x -= ghostSpeed;
+        }if (ghost.direction == 2 && ghost.canMove[2] == true) {
+            ghost.y += ghostSpeed;
+        }if (ghost.direction == 3 && ghost.canMove[3] == true) {
+            ghost.y -= ghostSpeed;
+        }
     }
 
     return ghost;
@@ -828,7 +831,7 @@ void display() {
     displayText(145.0f, 536.0f, "'R to Restart'", GLUT_BITMAP_HELVETICA_18);
     glColor3f(1.0f, 0.0f, 0.0f);
     displayText(145.0f, 516.0f, "'X to Quit'", GLUT_BITMAP_HELVETICA_18);
-    if (direction != 5 && !firstTimeDirectionPressed, GLUT_BITMAP_TIMES_ROMAN_24) {
+    if (direction != 5 && !firstTimeDirectionPressed) {
         firstTimeDirectionPressed = true;
     }
     if (!firstTimeDirectionPressed && !lose){
