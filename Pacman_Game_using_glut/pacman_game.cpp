@@ -4,11 +4,13 @@
 #include <vector>
 #include <cstdio>
 #include <cstdlib>
+#include <string>
+
 using namespace std;
 
 //Main window
 const int windowWidth = 464; //29
-const int windowHeight = 512; //32
+const int windowHeight = 552; //32
 
 //Pacman animation
 float startAngle = 60.0f; // Start angle of the arc
@@ -18,15 +20,21 @@ int pacman_anim_state = 0; //0=close 1 = open
 int pacman_angle = 0;
 bool displayPacman = true;
 
+bool win = false;
+bool lose = false;
+
 //Map squares size
 const int squareSize = 16;
+
+int scoreCounter = 0;
+const int scoreIncrementer = 5;
 
 //Food related
 const int foodSize = 4;
 const int food_offset = 16;
 
 //Pacman move direction
-int direction = 0; // R L U D
+int direction = 5; // R L U D
 
 //Pacman position and speed
 float pacman_origin[2] = { 232.0f, 224.0f };
@@ -65,7 +73,7 @@ bool drawGizmos = false;
 //False keypress Manager
 int coyoteTime = 30;
 int coyoteTimeCounter = 0;
-int directionToMove = 0;
+int directionToMove = 5;
 
 //Rays delation
 struct Ray {
@@ -609,13 +617,15 @@ void pacman_dead_state() {
         printf("Lives Left = %d\n", pacman_lives);
     if (pacman_lives == 0 && pacmanAwake) {
         printf("Pacman Dead\n");
+        lose = true;
         pacmanAwake = false;
         displayPacman = false;
     }
     pac_man_pos_x = pacman_origin[0];
     pac_man_pos_y = pacman_origin[1];
-    directionToMove = 0;
-    direction = 0;
+    directionToMove = 5;
+    direction = 5;
+    pacman_angle = 0;
 }
 
 void pacman_win_state() {
@@ -625,6 +635,7 @@ void pacman_win_state() {
     }
     if (count <= 0 && pacmanAwake) {
         printf("\n*********************Win*************************");
+        win = true;
         pacmanAwake = false;
         orangeGhost.x = 700;
         orangeGhost.y = 700;
@@ -663,6 +674,7 @@ void drawRays() {
     eaten = detectCollisionForMultipleLines_Food(rightRay5);
     if (eaten.size != 0) {
         foods.erase(std::remove_if(foods.begin(), foods.end(), [&](const Food& p) { return p.x == eaten.x && p.y == eaten.y && p.size == eaten.size; }), foods.end());
+        scoreCounter+=scoreIncrementer;
     }
 
     leftRay1 = drawLineFunc(leftRay1, 1, 0, offsetRay1, rayLength);
@@ -683,6 +695,7 @@ void drawRays() {
     eaten = detectCollisionForMultipleLines_Food(leftRay5);
     if (eaten.size != 0) {
         foods.erase(std::remove_if(foods.begin(), foods.end(), [&](const Food& p) { return p.x == eaten.x && p.y == eaten.y && p.size == eaten.size; }), foods.end());
+        scoreCounter += scoreIncrementer;
     }
 
     topRay1 = drawLineFunc(topRay1, 2, offsetRay1, 0, rayLength);
@@ -703,6 +716,7 @@ void drawRays() {
     eaten = detectCollisionForMultipleLines_Food(topRay5);
     if (eaten.size != 0) {
         foods.erase(std::remove_if(foods.begin(), foods.end(), [&](const Food& p) { return p.x == eaten.x && p.y == eaten.y && p.size == eaten.size; }), foods.end());
+        scoreCounter += scoreIncrementer;
     }
 
     bottomRay1 = drawLineFunc(bottomRay1, 3, offsetRay1, 0, rayLength);
@@ -723,7 +737,23 @@ void drawRays() {
     eaten = detectCollisionForMultipleLines_Food(bottomRay5);
     if (eaten.size != 0) {
         foods.erase(std::remove_if(foods.begin(), foods.end(), [&](const Food& p) { return p.x == eaten.x && p.y == eaten.y && p.size == eaten.size; }), foods.end());
+        scoreCounter += scoreIncrementer;
     }
+}
+
+void displayText(float x, float y, std::string text) {
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glRasterPos2f(x, y);
+
+    for (char c : text) {
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, c); // You can choose different fonts and sizes
+    }
+
+    glPopMatrix();
 }
 
 
@@ -749,7 +779,20 @@ void display() {
 
     pacman_win_state();
 
-
+    glColor3f(1.0, 1.0, 1.0);
+    //Score
+    displayText(315.0, 520.0, "Score = " + std::to_string(scoreCounter));
+    //Lives
+    displayText(20.0, 520.0, "Lives = " + std::to_string(pacman_lives));
+    //Lose text
+    if (win) {
+        glColor3f(255.0f, 242.0f, 0.0f);
+        displayText(180.0f, 213.0f, "YOU WIN");
+    }
+    if (lose) {
+        glColor3f(1.0f, 0.0f, 0.0f);
+        displayText(175.0f, 213.0f, "YOU LOSE");
+    }
 
     glFlush();
 
