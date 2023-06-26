@@ -11,7 +11,8 @@ This repository contains a Pacman game implemented using GLUT and OpenGL. The ga
 
 <h2>Controls</h2>
 <li>Use the arrow keys (up, down, left, right) to move the Pacman character.</li>
-<li>Press the 'q' key to quit the game.</li>
+<li>Press the 'x' key to quit the game.</li>
+<li>Press the 'r' key to restart the game.</li>
 
 <h2>Preview:</h2>
 
